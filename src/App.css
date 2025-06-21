@@ -1,0 +1,237 @@
+/* Add these new styles to your existing App.css */
+*{
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+/* Scroll container */
+.scroll-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Section base styles */
+.Section {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  overflow: hidden;
+  border-top: 5px solid rgba(255, 255, 255, 0.63);
+  background-color: #0a1128;
+}
+
+/* Three.js canvas transitions */
+.threejs-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Active section styling */
+.Section.active {
+  z-index: 10;
+}
+
+/* Scroll indicator */
+.scroll-indicator {
+  position: fixed;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1000;
+}
+
+.scroll-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+  margin: 10px 0;
+  transition: all 0.3s ease;
+}
+
+.scroll-dot.active {
+  background-color: white;
+  transform: scale(1.3);
+}
+
+/* Section enter animations */
+@keyframes sectionEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.Section:nth-child(1) { animation: sectionEnter 0.8s ease-out; }
+.Section:nth-child(2) { animation: sectionEnter 0.8s ease-out 0.1s both; }
+.Section:nth-child(3) { animation: sectionEnter 0.8s ease-out 0.2s both; }
+.Section:nth-child(4) { animation: sectionEnter 0.8s ease-out 0.3s both; }
+
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@font-face {
+  font-family: 'Microma';
+  src: url('./Fonts/Michroma-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+h1 {
+  font-family: 'Microma', sans-serif;
+}
+button{
+  font-family: 'Microma', sans-serif;
+}
+@keyframes pulseOpacity {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes header{
+
+  0%{
+    opacity: 0;
+  }
+  100%{
+    opacity: 100%;
+  }
+}
+header img:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease-in-out;
+}
+.email-footer {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  color: white;
+  font-family: 'Microma', sans-serif;
+  font-size: 16px;
+  z-index: 100;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+  text-decoration: none;
+}
+
+.email-footer:hover {
+  opacity: 1;
+}
+
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #0a1128;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  color: white;
+  font-family: 'Microma', sans-serif;
+}
+
+.loading-bar-container {
+  width: 200px;
+  height: 3px;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin-top: 20px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.loading-bar {
+  height: 100%;
+  background-color: #B069DB;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.loading-text {
+  margin-top: 20px;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top: 4px solid #B069DB;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
