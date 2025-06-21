@@ -34,11 +34,6 @@ function App() {
   const [showHeader, setShowHeader] = useState(false);
   const [enableScroll, setEnableScroll] = useState(false);
   const [currentSection, setCurrentSection] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [loadingText, setLoadingText] = useState("Loading essential assets...");
-  const [assetsToLoad, setAssetsToLoad] = useState([]);
-  const [loadedAssets, setLoadedAssets] = useState(0);
   
   const resetButtonRef = useRef(null);
   const sceneRef = useRef(null);
@@ -226,128 +221,62 @@ function App() {
     let previousMousePosition = { x: 0, y: 0 };
     const originalRotation = new THREE.Euler(0, THREE.MathUtils.degToRad(45), 0);
 
-    // Load essential assets first
-    const loadEssentialAssets = async () => {
-      try {
-        // Load room
-        await new Promise((resolve) => {
-          loader.load("/3D assets/Room.glb", (gltf) => {
-            const roomModel = gltf.scene;
-            roomModel.scale.set(1, 1, 1);
-            
-            const box = new THREE.Box3().setFromObject(roomModel);
-            const center = box.getCenter(new THREE.Vector3());
-            roomModel.position.sub(center);
-            roomModel.position.y = box.getSize(new THREE.Vector3()).y / 100;
+    // Load room
+    loader.load("/3D assets/Room.glb", (gltf) => {
+      const roomModel = gltf.scene;
+      roomModel.scale.set(1, 1, 1);
+      
+      const box = new THREE.Box3().setFromObject(roomModel);
+      const center = box.getCenter(new THREE.Vector3());
+      roomModel.position.sub(center);
+      roomModel.position.y = box.getSize(new THREE.Vector3()).y / 100;
 
-            const lightMap = textureLoader.load("/Textures/RoomMap.png", () => {
-              lightMap.flipY = false;
-              roomModel.traverse((child) => {
-                if (child.isMesh) {
-                  child.castShadow = true;
-                  child.receiveShadow = true;
-                  if (child.material) {
-                    child.material.lightMap = lightMap;
-                    child.material.lightMapIntensity = 1.5;
-                  }
-                }
-              });
-
-              scene.add(roomModel);
-              resolve();
-            });
-          });
-        });
-
-        // Load front model
-        await new Promise((resolve) => {
-          const frontModelContainer = new THREE.Group();
-          scene.add(frontModelContainer);
-
-          loader.load("/3D assets/Casette.glb", (gltf) => {
-            const frontModel = gltf.scene;
-            frontModelRef.current = frontModel;
-            frontModel.position.set(0, 0, -5);
-            frontModel.rotation.copy(originalRotation);
-            frontModel.scale.set(3, 3, 3);
-
-            const lightMap = textureLoader.load("/Textures/CasetteLightMap.png", () => {
-              lightMap.flipY = false;
-              frontModel.traverse((child) => {
-                if (child.isMesh) {
-                  child.castShadow = true;
-                  child.receiveShadow = true;
-                  if (child.material) {
-                    child.material.lightMap = lightMap;
-                    child.material.lightMapIntensity = 1.5;
-                  }
-                }
-              });
-
-              frontModelContainer.add(frontModel);
-              resolve();
-            });
-          });
-        });
-
-        // Now find all other assets to load
-        setLoadingText("Preparing assets...");
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const assets = [
-          // Models
-          "/3D assets/Cube.glb",
-          // Textures
-          "/Textures/CubeLightMap.png",
-          // Social icons
-          "/social-icons/linkedin.png",
-          "/social-icons/github.png",
-          "/social-icons/youtube.png",
-          "/social-icons/instagram.png"
-        ];
-
-        setAssetsToLoad(assets);
-        setLoadingText(`Loading assets (0/${assets.length})...`);
-
-        // For local testing, add a delay
-        if (process.env.NODE_ENV === 'development') {
-          await new Promise(resolve => setTimeout(resolve, 3000));
+      const lightMap = textureLoader.load("/Textures/RoomMap.png");
+      lightMap.flipY = false;
+      roomModel.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          if (child.material) {
+            child.material.lightMap = lightMap;
+            child.material.lightMapIntensity = 1.5;
+          }
         }
+      });
 
-        // Load all assets
-        await Promise.all(assets.map((asset, index) => 
-          new Promise((resolve) => {
-            if (asset.endsWith('.glb')) {
-              loader.load(asset, () => {
-                setLoadedAssets(prev => prev + 1);
-                setLoadingProgress(((index + 1) / assets.length) * 100);
-                setLoadingText(`Loading assets (${index + 1}/${assets.length})...`);
-                resolve();
-              });
-            } else {
-              textureLoader.load(asset, () => {
-                setLoadedAssets(prev => prev + 1);
-                setLoadingProgress(((index + 1) / assets.length) * 100);
-                setLoadingText(`Loading assets (${index + 1}/${assets.length})...`);
-                resolve();
-              });
+      scene.add(roomModel);
+      loadFrontModel();
+    });
+
+    // Load cassette model
+    function loadFrontModel() {
+      const frontModelContainer = new THREE.Group();
+      scene.add(frontModelContainer);
+
+      loader.load("/3D assets/Casette.glb", (gltf) => {
+        const frontModel = gltf.scene;
+        frontModelRef.current = frontModel;
+        frontModel.position.set(0, 0, -5);
+        frontModel.rotation.copy(originalRotation);
+        frontModel.scale.set(3, 3, 3);
+
+        const lightMap = textureLoader.load("/Textures/CasetteLightMap.png");
+        lightMap.flipY = false;
+        frontModel.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            if (child.material) {
+              child.material.lightMap = lightMap;
+              child.material.lightMapIntensity = 1.5;
             }
-          })));
+          }
+        });
 
-        // Finalize loading
-        setLoadingProgress(100);
-        setLoadingText("Ready!");
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setLoading(false);
+        frontModelContainer.add(frontModel);
         setShowResetButton(true);
-
-      } catch (error) {
-        console.error("Error loading assets:", error);
-        setLoadingText("Error loading assets. Please refresh.");
-      }
-    };
-
-    loadEssentialAssets();
+      });
+    }
 
     // Create falling cube
     const createFallingCube = (initialRotation = null) => {
@@ -683,20 +612,6 @@ function App() {
         touchAction: enableScroll ? "none" : "auto"
       }}
     >
-      {loading && (
-        <div className="loading-screen">
-          <div className="loading-spinner"></div>
-          <h2>Loading Portfolio</h2>
-          <div className="loading-bar-container">
-            <div 
-              className="loading-bar" 
-              style={{ width: `${loadingProgress}%` }}
-            ></div>
-          </div>
-          <div className="loading-text">{loadingText}</div>
-        </div>
-      )}
-
       {/* Landing Section */}
       <div style={{ 
         scrollSnapAlign: "start",
@@ -895,17 +810,17 @@ function App() {
         </header>
       )}
       {showHeader && (
-        <a 
-          href="mailto:fbenajimi@gmail.com" 
-          className="email-footer"
-          style={{
-            animation: "fadeIn 1s forwards 1s",
-            opacity: 0
-          }}
-        >
-          fbenajimi@gmail.com
-        </a>
-      )}
+  <a 
+    href="mailto:your-email@example.com" 
+    className="email-footer"
+    style={{
+      animation: "fadeIn 1s forwards 1s",
+      opacity: 0
+    }}
+  >
+    fbenajimi@gmail.com
+  </a>
+)}
     </div>
   );
 }
