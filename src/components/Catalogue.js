@@ -4,18 +4,17 @@ import * as CANNON from 'cannon-es';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import "../Style/Style.css";
 
-// Import your icons (you'll need to add these files to your project)
-import GitHubIcon from '../social-icons/github.png';
-import InstagramIcon from '../social-icons/instagram.png';
-import SoundcloudIcon from '../social-icons/soundcloud.png';
-import YoutubeIcon from '../social-icons/youtube.png';
-
+// Use PUBLIC_URL for icon paths for GitHub Pages compatibility
+const GitHubIcon = `${process.env.PUBLIC_URL}/social-icons/github.png`;
+const InstagramIcon = `${process.env.PUBLIC_URL}/social-icons/instagram.png`;
+const SoundcloudIcon = `${process.env.PUBLIC_URL}/social-icons/soundcloud.png`;
+const YoutubeIcon = `${process.env.PUBLIC_URL}/social-icons/youtube.png`;
 
 const Catalogue = ({ currentSection, sectionIndex }) => {
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
   const [hoveredSection, setHoveredSection] = useState(null);
-  
+
   // Cube rain state
   const worldRef = useRef(null);
   const cubesRef = useRef([]);
@@ -61,7 +60,7 @@ const Catalogue = ({ currentSection, sectionIndex }) => {
       color: '#ffffff',
       icons: [
         { icon: SoundcloudIcon, url: 'https://soundcloud.com/takeatour/8ymt-id-1/s-ERxKJdXxy1D?si=0e56ae3513f74ba4ab85a4f1649a8d93&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing' },
-        {icon: SoundcloudIcon, url: 'https://soundcloud.com/takeatour/in-and-out-of-psytrance/s-i6kF2vXk778?si=eb9a746a32a54234ba12c87f5b810153&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing' }
+        { icon: SoundcloudIcon, url: 'https://soundcloud.com/takeatour/in-and-out-of-psytrance/s-i6kF2vXk778?si=eb9a746a32a54234ba12c87f5b810153&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing' }
       ]
     },
     {
@@ -86,19 +85,18 @@ const Catalogue = ({ currentSection, sectionIndex }) => {
     }
   ];
 
-
   // Cube rain functions
   const createFallingCube = (initialRotation = null) => {
     if (!worldRef.current || !sceneRef.current || cubesRef.current.length >= MAX_CUBES) return;
 
     const loader = new GLTFLoader();
     const textureLoader = new THREE.TextureLoader();
-    
-    loader.load("/3D assets/Cube3.glb", (gltf) => {
+
+    loader.load(`${process.env.PUBLIC_URL}/3D assets/Cube3.glb`, (gltf) => {
       const cube = gltf.scene.clone();
-      const lightMap = textureLoader.load("/Textures/Cube3LightMap.png");
+      const lightMap = textureLoader.load(`${process.env.PUBLIC_URL}/Textures/Cube3LightMap.png`);
       lightMap.flipY = false;
-      
+
       cube.traverse((child) => {
         if (child.isMesh) {
           child.material.lightMap = lightMap;
@@ -112,7 +110,7 @@ const Catalogue = ({ currentSection, sectionIndex }) => {
       const z = (Math.random() - 0.5) * 10;
       cube.position.set(x, 15, z);
       cube.scale.set(1, 1, 1);
-      
+
       if (initialRotation) {
         cube.rotation.copy(initialRotation);
       } else {
@@ -122,7 +120,7 @@ const Catalogue = ({ currentSection, sectionIndex }) => {
           Math.random() * Math.PI * 2
         );
       }
-      
+
       sceneRef.current.add(cube);
 
       const size = 1.5;
@@ -159,7 +157,7 @@ const Catalogue = ({ currentSection, sectionIndex }) => {
     for (let i = 0; i < cubesToCreate; i++) {
       setTimeout(() => createFallingCube(), i * 100);
     }
-    
+
     // Set up interval for continuous cube creation
     cubeIntervalRef.current = setInterval(() => {
       if (cubesRef.current.length < MAX_CUBES) {
@@ -220,7 +218,7 @@ const Catalogue = ({ currentSection, sectionIndex }) => {
       const textureLoader = new THREE.TextureLoader();
 
       // Load room
-      loader.load("/3D assets/Room3.glb", (gltf) => {
+      loader.load(`${process.env.PUBLIC_URL}/3D assets/Room3.glb`, (gltf) => {
         const roomModel = gltf.scene;
         roomModel.scale.set(1, 1, 1);
 
@@ -229,7 +227,7 @@ const Catalogue = ({ currentSection, sectionIndex }) => {
         roomModel.position.sub(center);
         roomModel.position.y = box.getSize(new THREE.Vector3()).y / 100;
 
-        const lightMap = textureLoader.load("/Textures/Room3LightMap.png");
+        const lightMap = textureLoader.load(`${process.env.PUBLIC_URL}/Textures/Room3LightMap.png`);
         lightMap.flipY = false;
 
         roomModel.traverse((child) => {
@@ -249,10 +247,10 @@ const Catalogue = ({ currentSection, sectionIndex }) => {
       // Animation loop
       const animate = () => {
         animationFrameId = requestAnimationFrame(animate);
-        
+
         // Update physics
         worldRef.current.step(1/60);
-        
+
         // Update cube positions
         cubesRef.current.forEach(cube => {
           cube.mesh.position.copy(cube.body.position);
@@ -324,7 +322,7 @@ const Catalogue = ({ currentSection, sectionIndex }) => {
     }
   };
 
-    return (
+  return (
     <section className="Section" style={{ 
       position: 'relative',
       width: '100vw',

@@ -15,7 +15,7 @@ const AboutMe = () => {
   const hoveredItemRef = useRef(null);
   const clockRef = useRef(new THREE.Clock());
   const isMobileRef = useRef(false);
-  
+
   // UI State
   const [hoveredObject, setHoveredObject] = useState(null);
   const [showPrompt, setShowPrompt] = useState(true);
@@ -117,127 +117,136 @@ const AboutMe = () => {
       const originalRotations = new Map();
 
       const loadTableItem = (modelPath, lightMapPath, position, rotation, scale, name) => {
-        loader.load(modelPath, (gltf) => {
-          const model = gltf.scene;
-          model.position.set(position.x, position.y, position.z);
-          if (rotation) model.rotation.set(rotation.x, rotation.y, rotation.z);
-          model.scale.set(scale.x, scale.y, scale.z);
-          model.userData.name = name;
+        loader.load(
+          `${process.env.PUBLIC_URL}${modelPath}`,
+          (gltf) => {
+            const model = gltf.scene;
+            model.position.set(position.x, position.y, position.z);
+            if (rotation) model.rotation.set(rotation.x, rotation.y, rotation.z);
+            model.scale.set(scale.x, scale.y, scale.z);
+            model.userData.name = name;
 
-          // Store original rotation
-          originalRotations.set(model, {
-            x: rotation?.x || 0,
-            y: rotation?.y || 0,
-            z: rotation?.z || 0
-          });
+            // Store original rotation
+            originalRotations.set(model, {
+              x: rotation?.x || 0,
+              y: rotation?.y || 0,
+              z: rotation?.z || 0
+            });
 
-          const lightMap = textureLoader.load(lightMapPath);
+            const lightMap = textureLoader.load(`${process.env.PUBLIC_URL}${lightMapPath}`);
+            lightMap.flipY = false;
+
+            model.traverse((child) => {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                if (child.material) {
+                  child.material.lightMap = lightMap;
+                  child.material.lightMapIntensity = 5;
+                }
+              }
+            });
+
+            scene.add(model);
+            tableItemsRef.current.push(model);
+          }
+        );
+      };
+
+      // Room
+      loader.load(
+        `${process.env.PUBLIC_URL}/3D assets/Room2.glb`,
+        (gltf) => {
+          const roomModel = gltf.scene;
+          roomModel.scale.set(1, 1, 1);
+
+          const box = new THREE.Box3().setFromObject(roomModel);
+          const center = box.getCenter(new THREE.Vector3());
+          roomModel.position.sub(center);
+          roomModel.position.y = box.getSize(new THREE.Vector3()).y / 100;
+
+          const lightMap = textureLoader.load(`${process.env.PUBLIC_URL}/Textures/Room2LightMap.png`);
           lightMap.flipY = false;
 
-          model.traverse((child) => {
+          roomModel.traverse((child) => {
             if (child.isMesh) {
               child.castShadow = true;
               child.receiveShadow = true;
               if (child.material) {
                 child.material.lightMap = lightMap;
-                child.material.lightMapIntensity = 5;
+                child.material.lightMapIntensity = 1.5;
               }
             }
           });
 
-          scene.add(model);
-          tableItemsRef.current.push(model);
-        });
-      };
-
-      // Room
-      loader.load("/3D assets/Room2.glb", (gltf) => {
-        const roomModel = gltf.scene;
-        roomModel.scale.set(1, 1, 1);
-
-        const box = new THREE.Box3().setFromObject(roomModel);
-        const center = box.getCenter(new THREE.Vector3());
-        roomModel.position.sub(center);
-        roomModel.position.y = box.getSize(new THREE.Vector3()).y / 100;
-
-        const lightMap = textureLoader.load("/Textures/Room2LightMap.png");
-        lightMap.flipY = false;
-
-        roomModel.traverse((child) => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-            if (child.material) {
-              child.material.lightMap = lightMap;
-              child.material.lightMapIntensity = 1.5;
-            }
-          }
-        });
-
-        scene.add(roomModel);
-      });
+          scene.add(roomModel);
+        }
+      );
 
       // Table and items
-      loader.load("/3D assets/Table.glb", (gltf) => {
-        const tableModel = gltf.scene;
-        tableRef.current = tableModel;
+      loader.load(
+        `${process.env.PUBLIC_URL}/3D assets/Table.glb`,
+        (gltf) => {
+          const tableModel = gltf.scene;
+          tableRef.current = tableModel;
 
-        tableModel.position.set(-14, 2, 2);
-        tableModel.rotation.set(0, -Math.PI, 0);
-        tableModel.scale.set(5, 5, 5);
+          tableModel.position.set(-14, 2, 2);
+          tableModel.rotation.set(0, -Math.PI, 0);
+          tableModel.scale.set(5, 5, 5);
 
-        const tableLightMap = textureLoader.load("/Textures/TableLightMap.png");
-        tableLightMap.flipY = false;
+          const tableLightMap = textureLoader.load(`${process.env.PUBLIC_URL}/Textures/TableLightMap.png`);
+          tableLightMap.flipY = false;
 
-        tableModel.traverse((child) => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-            if (child.material) {
-              child.material.lightMap = tableLightMap;
-              child.material.lightMapIntensity = 10;
+          tableModel.traverse((child) => {
+            if (child.isMesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+              if (child.material) {
+                child.material.lightMap = tableLightMap;
+                child.material.lightMapIntensity = 10;
+              }
             }
-          }
-        });
+          });
 
-        scene.add(tableModel);
+          scene.add(tableModel);
 
-        loadTableItem(
-          "/3D assets/Controller.glb",
-          "/Textures/ControllerLightMap.png",
-          { x: -14.5, y: 2.3, z: 2 },
-          { x: 0, y: 0, z: Math.PI * 2 + Math.PI / 8 },
-          { x: 3, y: 3, z: 3 },
-          "controller"
-        );
+          loadTableItem(
+            "/3D assets/Controller.glb",
+            "/Textures/ControllerLightMap.png",
+            { x: -14.5, y: 2.3, z: 2 },
+            { x: 0, y: 0, z: Math.PI * 2 + Math.PI / 8 },
+            { x: 3, y: 3, z: 3 },
+            "controller"
+          );
 
-        loadTableItem(
-          "/3D assets/Degree.glb",
-          "/Textures/DegreeLightMap.png",
-          { x: -14, y: 2.2, z: 4.5 },
-          { x: 0, y: Math.PI/2-Math.PI/4, z: 0 },
-          { x: 2, y: 2, z: 2 },
-          "degree"
-        );
+          loadTableItem(
+            "/3D assets/Degree.glb",
+            "/Textures/DegreeLightMap.png",
+            { x: -14, y: 2.2, z: 4.5 },
+            { x: 0, y: Math.PI/2-Math.PI/4, z: 0 },
+            { x: 2, y: 2, z: 2 },
+            "degree"
+          );
 
-        loadTableItem(
-          "/3D assets/Headphones.glb",
-          "/Textures/HeadphonesLightMap.png",
-          { x: -13, y: 2.5, z: 0 },
-          { x: Math.PI, y: Math.PI + Math.PI / 3, z: -Math.PI / 2 - Math.PI / 8.5 },
-          { x: 1.4, y: 1.4, z: 1.4 },
-          "headphones"
-        );
+          loadTableItem(
+            "/3D assets/Headphones.glb",
+            "/Textures/HeadphonesLightMap.png",
+            { x: -13, y: 2.5, z: 0 },
+            { x: Math.PI, y: Math.PI + Math.PI / 3, z: -Math.PI / 2 - Math.PI / 8.5 },
+            { x: 1.4, y: 1.4, z: 1.4 },
+            "headphones"
+          );
 
-        loadTableItem(
-          "/3D assets/Papper.glb",
-          "/Textures/PapperLightMap.png",
-          { x: -13, y: 2.2, z: 2 },
-          { x: 0, y: Math.PI - Math.PI / 2, z: 0 },
-          { x: 1, y: 1, z: 1 },
-          "paper"
-        );
-      });
+          loadTableItem(
+            "/3D assets/Papper.glb",
+            "/Textures/PapperLightMap.png",
+            { x: -13, y: 2.2, z: 2 },
+            { x: 0, y: Math.PI - Math.PI / 2, z: 0 },
+            { x: 1, y: 1, z: 1 },
+            "paper"
+          );
+        }
+      );
 
       // Interaction handlers
       let isDragging = false;

@@ -1,7 +1,10 @@
-/* Add these new styles to your existing App.css */
-*{
+.Section{
+overflow-x: hidden !important;
+}
+
+html, body {
+  max-width: 100%;
   overflow-x: hidden;
-  overflow-y: hidden;
 }
 /* Scroll container */
 .scroll-container {
@@ -17,7 +20,7 @@
 /* Section base styles */
 .Section {
   position: relative;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   scroll-snap-align: start;
   scroll-snap-stop: always;
@@ -93,9 +96,13 @@
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@media (max-width: 768px) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
+  }
+  button {
+    margin-bottom: 20%;
+    width: 100%;
   }
 }
 

@@ -8,7 +8,7 @@ const Skills = ({ currentSection, sectionIndex }) => {
   const canvasRef = useRef(null);
   const sceneRef = useRef(null);
   const [hoveredSection, setHoveredSection] = useState(null);
-  
+
   // Cube rain state
   const worldRef = useRef(null);
   const cubesRef = useRef([]);
@@ -22,42 +22,42 @@ const Skills = ({ currentSection, sectionIndex }) => {
       title: 'Unity',
       description: 'I develop both 2D and 3D games using Unity, a platform that has greatly influenced my approach to game development. Unity’s workspace has pushed me to think critically and reason like a game developer, which has also made me confident in working with other game development software such as Unreal. My focus lies in developing hypercasual, third-person, and VR games. Specifically, I design game mechanics, gameplay systems, and ideas, ensuring that they are executed in a technically sound and efficient manner.',
       size: 'large',
-      color: '#ffffff' // Purple-ish
+      color: '#ffffff'
     },
     {
       id: 'blender',
       title: 'Blender',
       description: 'Like many game developers, I found myself wanting more creative control than pre-made assets could offer. This led me to learn 3D modeling using Blender. I now design custom environments, decorative assets, and avatars—and handle everything from modeling and rigging to animation, allowing me to bring fully original content into my projects.',
       size: 'medium',
-      color: '#ffffff' // Orange
+      color: '#ffffff'
     },
     {
       id: 'Coding',
       title: 'Coding',
-      description: 'I’m proficient in C#, C++, and C—core languages in the game development space. I use C# extensively in Unity and have experience with C++ for performance-critical systems and engine-level work. I also work with Python and JavaScript for tooling and pipeline automation, Bash for scripting, and Git for version control and team collaboration.',
+      description: 'I’m proficient in C#, C++, and C—core languages in the game development space.I also work with Python, JavaScript, Bash and Git.',
       size: 'large',
-      color: '#ffffff' // Dodger Blue
+      color: '#ffffff'
     },
     {
       id: 'music',
       title: 'Music',
       description: 'Producing electronic music led me to explore digital audio theory and merge sound with interactive design in games.',
-      size: 'meduim',
-      color: '#ffffff' // Hot Pink
+      size: 'medium',
+      color: '#ffffff'
     },
     {
       id: 'languages',
       title: 'Languages',
       description: 'I speak Arabic, French, and English fluently.',
       size: 'small',
-      color: '#ffffff' // Medium Sea Green
+      color: '#ffffff'
     },
     {
       id: 'soft-skills',
       title: 'Soft Skills',
       description: 'I excel in collaboration, adaptability, and creative problem-solving. I value open communication and feedback, staying engaged throughout every project phase.',
       size: 'small',
-      color: '#ffffff' // Medium Purple
+      color: '#ffffff'
     },
   ];
 
@@ -67,12 +67,12 @@ const Skills = ({ currentSection, sectionIndex }) => {
 
     const loader = new GLTFLoader();
     const textureLoader = new THREE.TextureLoader();
-    
-    loader.load("/3D assets/Cube2.glb", (gltf) => {
+
+    loader.load(`${process.env.PUBLIC_URL}/3D assets/Cube2.glb`, (gltf) => {
       const cube = gltf.scene.clone();
-      const lightMap = textureLoader.load("/Textures/Cube2LightMap.png");
+      const lightMap = textureLoader.load(`${process.env.PUBLIC_URL}/Textures/Cube2LightMap.png`);
       lightMap.flipY = false;
-      
+
       cube.traverse((child) => {
         if (child.isMesh) {
           child.material.lightMap = lightMap;
@@ -86,7 +86,7 @@ const Skills = ({ currentSection, sectionIndex }) => {
       const z = (Math.random() - 0.5) * 10;
       cube.position.set(x, 15, z);
       cube.scale.set(1, 1, 1);
-      
+
       if (initialRotation) {
         cube.rotation.copy(initialRotation);
       } else {
@@ -96,7 +96,7 @@ const Skills = ({ currentSection, sectionIndex }) => {
           Math.random() * Math.PI * 2
         );
       }
-      
+
       sceneRef.current.add(cube);
 
       const size = 1.5;
@@ -133,7 +133,7 @@ const Skills = ({ currentSection, sectionIndex }) => {
     for (let i = 0; i < cubesToCreate; i++) {
       setTimeout(() => createFallingCube(), i * 100);
     }
-    
+
     // Set up interval for continuous cube creation
     cubeIntervalRef.current = setInterval(() => {
       if (cubesRef.current.length < MAX_CUBES) {
@@ -194,7 +194,7 @@ const Skills = ({ currentSection, sectionIndex }) => {
       const textureLoader = new THREE.TextureLoader();
 
       // Load room
-      loader.load("/3D assets/Room4.glb", (gltf) => {
+      loader.load(`${process.env.PUBLIC_URL}/3D assets/Room4.glb`, (gltf) => {
         const roomModel = gltf.scene;
         roomModel.scale.set(1, 1, 1);
 
@@ -203,7 +203,7 @@ const Skills = ({ currentSection, sectionIndex }) => {
         roomModel.position.sub(center);
         roomModel.position.y = box.getSize(new THREE.Vector3()).y / 100;
 
-        const lightMap = textureLoader.load("/Textures/Room4LightMap.png");
+        const lightMap = textureLoader.load(`${process.env.PUBLIC_URL}/Textures/Room4LightMap.png`);
         lightMap.flipY = false;
 
         roomModel.traverse((child) => {
@@ -223,10 +223,10 @@ const Skills = ({ currentSection, sectionIndex }) => {
       // Animation loop
       const animate = () => {
         animationFrameId = requestAnimationFrame(animate);
-        
+
         // Update physics
         worldRef.current.step(1/60);
-        
+
         // Update cube positions
         cubesRef.current.forEach(cube => {
           cube.mesh.position.copy(cube.body.position);
@@ -292,9 +292,9 @@ const Skills = ({ currentSection, sectionIndex }) => {
       case 'medium':
         return { gridColumn: 'span 2', gridRow: 'span 2' };
       case 'small':
-        return { gridColumn: 'span 1', gridRow: 'span 1' };
+        return { gridColumn: 'span 2', gridRow: 'span 1' };
       default:
-        return { gridColumn: 'span 1', gridRow: 'span 2' };
+        return { gridColumn: 'span 1', gridRow: 'span 1' };
     }
   };
 

@@ -34,7 +34,9 @@ function Landing() {
   const [showHeader, setShowHeader] = useState(false);
   const [enableScroll, setEnableScroll] = useState(false);
   const [currentSection, setCurrentSection] = useState(0);
-  
+  const [loading, setLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+
   const resetButtonRef = useRef(null);
   const sceneRef = useRef(null);
   const frontModelRef = useRef(null);
@@ -42,18 +44,76 @@ function Landing() {
   const worldRef = useRef(null);
   const cubesRef = useRef([]);
   const scrollContainerRef = useRef(null);
-  
+
   const isResettingRef = useRef(false);
   const allowRotationRef = useRef(true);
   const isScrollingRef = useRef(false);
   const startYRef = useRef(0);
-  
+
   const cubeIntervalRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
 
   // Constants
   const MAX_CUBES = 15;
   const INITIAL_CUBES = 10;
+
+  // Asset preloading (like AboutMe)
+  useEffect(() => {
+    const assetList = [
+      "/3D assets/Room.glb",
+      "/3D assets/Casette.glb",
+      "/3D assets/Cube.glb",
+      "/Textures/RoomMap.png",
+      "/Textures/CasetteLightMap.png",
+      "/Textures/CubeLightMap.png",
+      "/social-icons/linkedin.png",
+      "/social-icons/github.png",
+      "/social-icons/youtube.png",
+      "/social-icons/instagram.png"
+    ];
+    const loader = new GLTFLoader();
+    const textureLoader = new THREE.TextureLoader();
+    let loaded = 0;
+    const total = assetList.length;
+
+    assetList.forEach(asset => {
+      if (asset.endsWith('.glb')) {
+        loader.load(
+          `${process.env.PUBLIC_URL}${asset}`,
+          () => {
+            loaded++;
+            setLoadingProgress(Math.round((loaded / total) * 100));
+            if (loaded === total) setLoading(false);
+          },
+          undefined,
+          () => {
+            loaded++;
+            setLoadingProgress(Math.round((loaded / total) * 100));
+            if (loaded === total) setLoading(false);
+          }
+        );
+      } else {
+        textureLoader.load(
+          `${process.env.PUBLIC_URL}${asset}`,
+          () => {
+            loaded++;
+            setLoadingProgress(Math.round((loaded / total) * 100));
+            if (loaded === total) setLoading(false);
+          },
+          undefined,
+          () => {
+            loaded++;
+            setLoadingProgress(Math.round((loaded / total) * 100));
+            if (loaded === total) setLoading(false);
+          }
+        );
+      }
+    });
+    // Force resize after loading to fix display issues
+    if (!loading) {
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+    }
+  }, []);
 
   // Scroll handling
   useEffect(() => {
@@ -66,14 +126,10 @@ function Landing() {
 
     const handleScroll = () => {
       if (isAnimating) return;
-      
       const scrollPosition = container.scrollTop;
       const windowHeight = window.innerHeight;
       const newSection = Math.round(scrollPosition / windowHeight);
-      
-      if (newSection !== currentSection) {
-        setCurrentSection(newSection);
-      }
+      if (newSection !== currentSection) setCurrentSection(newSection);
     };
 
     const handleTouchStart = (e) => {
@@ -91,10 +147,8 @@ function Landing() {
     const handleTouchEnd = (e) => {
       if (!isScrollingRef.current) return;
       isScrollingRef.current = false;
-      
       const deltaY = e.changedTouches[0].clientY - startYRef.current;
       const threshold = window.innerHeight * 0.15;
-      
       if (Math.abs(deltaY) > threshold) {
         const direction = deltaY > 0 ? 1 : -1;
         const newSection = Math.max(0, Math.min(3, currentSection + direction));
@@ -106,22 +160,16 @@ function Landing() {
       e.preventDefault();
       const delta = Math.sign(e.deltaY);
       const newSection = Math.max(0, Math.min(3, currentSection + delta));
-      
-      if (newSection !== currentSection) {
-        scrollToSection(newSection);
-      }
+      if (newSection !== currentSection) scrollToSection(newSection);
     };
 
     const scrollToSection = (sectionIndex) => {
       if (isAnimating) return;
-      
       isAnimating = true;
       setCurrentSection(sectionIndex);
-      
       const targetScroll = sectionIndex * window.innerHeight;
       container.style.scrollBehavior = 'smooth';
       container.scrollTo({ top: targetScroll, behavior: 'smooth' });
-      
       scrollTimeoutRef.current = setTimeout(() => {
         container.style.scrollBehavior = 'auto';
         isAnimating = false;
@@ -146,6 +194,7 @@ function Landing() {
 
   // Three.js initialization
   useEffect(() => {
+    if (loading) return; // Only run after assets are loaded
     document.body.style.overflow = 'hidden';
 
     // Scene setup
@@ -222,16 +271,14 @@ function Landing() {
     const originalRotation = new THREE.Euler(0, THREE.MathUtils.degToRad(45), 0);
 
     // Load room
-    loader.load("/3D assets/Room.glb", (gltf) => {
+    loader.load(`${process.env.PUBLIC_URL}/3D assets/Room.glb`, (gltf) => {
       const roomModel = gltf.scene;
       roomModel.scale.set(1, 1, 1);
-      
       const box = new THREE.Box3().setFromObject(roomModel);
       const center = box.getCenter(new THREE.Vector3());
       roomModel.position.sub(center);
       roomModel.position.y = box.getSize(new THREE.Vector3()).y / 100;
-
-      const lightMap = textureLoader.load("/Textures/RoomMap.png");
+      const lightMap = textureLoader.load(`${process.env.PUBLIC_URL}/Textures/RoomMap.png`);
       lightMap.flipY = false;
       roomModel.traverse((child) => {
         if (child.isMesh) {
@@ -243,7 +290,6 @@ function Landing() {
           }
         }
       });
-
       scene.add(roomModel);
       loadFrontModel();
     });
@@ -252,15 +298,13 @@ function Landing() {
     function loadFrontModel() {
       const frontModelContainer = new THREE.Group();
       scene.add(frontModelContainer);
-
-      loader.load("/3D assets/Casette.glb", (gltf) => {
+      loader.load(`${process.env.PUBLIC_URL}/3D assets/Casette.glb`, (gltf) => {
         const frontModel = gltf.scene;
         frontModelRef.current = frontModel;
         frontModel.position.set(0, 0, -5);
         frontModel.rotation.copy(originalRotation);
         frontModel.scale.set(3, 3, 3);
-
-        const lightMap = textureLoader.load("/Textures/CasetteLightMap.png");
+        const lightMap = textureLoader.load(`${process.env.PUBLIC_URL}/Textures/CasetteLightMap.png`);
         lightMap.flipY = false;
         frontModel.traverse((child) => {
           if (child.isMesh) {
@@ -272,7 +316,6 @@ function Landing() {
             }
           }
         });
-
         frontModelContainer.add(frontModel);
         setShowResetButton(true);
       });
@@ -281,12 +324,10 @@ function Landing() {
     // Create falling cube
     const createFallingCube = (initialRotation = null) => {
       if (cubesRef.current.length >= MAX_CUBES) return;
-
-      loader.load("/3D assets/Cube.glb", (gltf) => {
+      loader.load(`${process.env.PUBLIC_URL}/3D assets/Cube.glb`, (gltf) => {
         const cube = gltf.scene.clone();
-        const lightMap = textureLoader.load("/Textures/CubeLightMap.png");
+        const lightMap = textureLoader.load(`${process.env.PUBLIC_URL}/Textures/CubeLightMap.png`);
         lightMap.flipY = false;
-        
         cube.traverse((child) => {
           if (child.isMesh) {
             child.material.lightMap = lightMap;
@@ -295,12 +336,10 @@ function Landing() {
             child.receiveShadow = true;
           }
         });
-
         const x = (Math.random() - 0.5) * 10;
         const z = 10;
         cube.position.set(x, 15, z);
         cube.scale.set(1, 1, 1);
-        
         if (initialRotation) {
           cube.rotation.copy(initialRotation);
         } else {
@@ -310,9 +349,7 @@ function Landing() {
             Math.random() * Math.PI * 2
           );
         }
-        
         scene.add(cube);
-
         const size = 1;
         const cubeShape = new CANNON.Box(new CANNON.Vec3(size, size, size));
         const cubeBody = new CANNON.Body({
@@ -327,7 +364,6 @@ function Landing() {
           material: new CANNON.Material({ restitution: 0.7 })
         });
         world.addBody(cubeBody);
-
         cubesRef.current.push({ mesh: cube, body: cubeBody });
       });
     };
@@ -338,7 +374,6 @@ function Landing() {
       for (let i = 0; i < cubesToCreate; i++) {
         setTimeout(() => createFallingCube(), i * 100);
       }
-      
       cubeIntervalRef.current = setInterval(() => {
         if (cubesRef.current.length < MAX_CUBES) {
           createFallingCube();
@@ -351,14 +386,11 @@ function Landing() {
     // Event handlers
     const onPointerDown = (event) => {
       if (!frontModelRef.current || isResettingRef.current || !allowRotationRef.current) return;
-
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObject(frontModelRef.current, true);
-
       if (intersects.length > 0) {
         isDraggingModel = true;
         controls.enabled = false;
@@ -366,20 +398,16 @@ function Landing() {
         outlinePass.selectedObjects = [frontModelRef.current];
       }
     };
-
     const onPointerMove = (event) => {
       if (isResettingRef.current) return;
-
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
       raycaster.setFromCamera(mouse, camera);
       if (frontModelRef.current) {
         const intersects = raycaster.intersectObject(frontModelRef.current, true);
         outlinePass.selectedObjects = intersects.length > 0 ? [frontModelRef.current] : [];
       }
-
       if (isDraggingModel && frontModelRef.current && allowRotationRef.current) {
         const deltaX = event.clientX - previousMousePosition.x;
         const deltaY = event.clientY - previousMousePosition.y;
@@ -388,14 +416,12 @@ function Landing() {
         previousMousePosition = { x: event.clientX, y: event.clientY };
       }
     };
-
     const onPointerUp = () => {
       if (isDraggingModel) {
         isDraggingModel = false;
         controls.enabled = true;
       }
     };
-
     const onWindowResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -403,29 +429,20 @@ function Landing() {
       composer.setSize(window.innerWidth, window.innerHeight);
       outlinePass.setSize(window.innerWidth, window.innerHeight);
     };
-
-    // Mount
     if (refContainer.current) {
       refContainer.current.replaceChildren(renderer.domElement);
     }
-
-    // Event listeners
     renderer.domElement.addEventListener("pointerdown", onPointerDown);
     renderer.domElement.addEventListener("pointermove", onPointerMove);
     renderer.domElement.addEventListener("pointerup", onPointerUp);
     window.addEventListener("resize", onWindowResize);
-
-    // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
-
       world.step(1/60);
-
       cubesRef.current.forEach(cube => {
         cube.mesh.position.copy(cube.body.position);
         cube.mesh.quaternion.copy(cube.body.quaternion);
       });
-
       cubesRef.current = cubesRef.current.filter(cube => {
         if (cube.body.position.y < -10) {
           scene.remove(cube.mesh);
@@ -434,11 +451,9 @@ function Landing() {
         }
         return true;
       });
-
       if (!isDraggingModel && !isResettingRef.current) {
         controls.update();
       }
-
       if (sceneRef.current && frontModelRef.current) {
         const container = frontModelRef.current.parent;
         if (container) {
@@ -446,12 +461,9 @@ function Landing() {
           container.quaternion.copy(camera.quaternion);
         }
       }
-
       composer.render();
     };
-
     animate();
-
     return () => {
       clearInterval(cubeIntervalRef.current);
       renderer.dispose();
@@ -462,7 +474,7 @@ function Landing() {
       renderer.domElement.removeEventListener("pointerup", onPointerUp);
       if (refContainer.current) refContainer.current.innerHTML = "";
     };
-  }, []);
+  }, [loading]);
 
   const handleResetClick = () => {
     if (frontModelRef.current && !isResettingRef.current) {
@@ -535,7 +547,6 @@ function Landing() {
       for (let i = 0; i < cubesToCreate; i++) {
         setTimeout(() => createFallingCube(), i * 100);
       }
-      
       cubeIntervalRef.current = setInterval(() => {
         if (cubesRef.current.length < MAX_CUBES) {
           createFallingCube();
@@ -550,12 +561,10 @@ function Landing() {
     if (worldRef.current && sceneRef.current && cubesRef.current.length < MAX_CUBES) {
       const loader = new GLTFLoader();
       const textureLoader = new THREE.TextureLoader();
-      
-      loader.load("/3D assets/Cube.glb", (gltf) => {
+      loader.load(`${process.env.PUBLIC_URL}/3D assets/Cube.glb`, (gltf) => {
         const cube = gltf.scene.clone();
-        const lightMap = textureLoader.load("/Textures/CubeLightMap.png");
+        const lightMap = textureLoader.load(`${process.env.PUBLIC_URL}/Textures/CubeLightMap.png`);
         lightMap.flipY = false;
-        
         cube.traverse((child) => {
           if (child.isMesh) {
             child.material.lightMap = lightMap;
@@ -564,20 +573,16 @@ function Landing() {
             child.receiveShadow = true;
           }
         });
-
         const x = (Math.random() - 0.5) * 10;
         const z = (Math.random() - 0.5) * 10;
         cube.position.set(x, 15, z);
         cube.scale.set(1, 1, 1);
-        
         cube.rotation.set(
           Math.random() * Math.PI * 2,
           Math.random() * Math.PI * 2,
           Math.random() * Math.PI * 2
         );
-        
         sceneRef.current.add(cube);
-
         const size = 1.5;
         const cubeShape = new CANNON.Box(new CANNON.Vec3(size/2, size/2, size/2));
         const cubeBody = new CANNON.Body({
@@ -592,7 +597,6 @@ function Landing() {
           material: new CANNON.Material({ restitution: 0.7 })
         });
         worldRef.current.addBody(cubeBody);
-
         cubesRef.current.push({ mesh: cube, body: cubeBody });
       });
     }
@@ -605,13 +609,27 @@ function Landing() {
       ref={scrollContainerRef}
       style={{ 
         position: "relative", 
-        width: "100%", 
+        width: "100", 
         height: "100vh",
         overflow: enableScroll ? "auto" : "hidden",
+        overflowX: "hidden",
         scrollSnapType: enableScroll ? "y mandatory" : "none",
         touchAction: enableScroll ? "none" : "auto"
       }}
     >
+      {loading && (
+        <div className="loading-screen">
+          <div className="loading-spinner"></div>
+          <h2>Loading Portfolio</h2>
+          <div className="loading-bar-container">
+            <div 
+              className="loading-bar" 
+              style={{ width: `${loadingProgress}%` }}
+            ></div>
+          </div>
+          <div className="loading-text">Loading assets...</div>
+        </div>
+      )}
       {/* Landing Section */}
       <div style={{ 
         scrollSnapAlign: "start",
@@ -723,7 +741,6 @@ function Landing() {
           }}>
             <AboutMe currentSection={currentSection} sectionIndex={1} />
           </div>
-          
           <div style={{ 
             scrollSnapAlign: "start",
             height: "100vh",
@@ -731,7 +748,6 @@ function Landing() {
           }}>
             <Skills currentSection={currentSection} sectionIndex={2} />
           </div>
-          
           <div style={{ 
             scrollSnapAlign: "start",
             height: "100vh",
@@ -769,10 +785,10 @@ function Landing() {
             alignItems: "center",
           }}>
             {[
-              { href: "https://www.linkedin.com/in/farouk-ben-ajimi-79a557365/", src: "/social-icons/linkedin.png", alt: "LinkedIn" },
-              { href: "https://github.com/8YMT", src: "/social-icons/github.png", alt: "GitHub" },
-              { href: "https://www.youtube.com/@FaroukBenAjimi", src: "/social-icons/youtube.png", alt: "YouTube" },
-              { href: "https://www.instagram.com/8aymt/", src: "/social-icons/instagram.png", alt: "Instagram" }
+              { href: "https://www.linkedin.com/in/farouk-ben-ajimi-79a557365/", src: `${process.env.PUBLIC_URL}/social-icons/linkedin.png`, alt: "LinkedIn" },
+              { href: "https://github.com/8YMT", src: `${process.env.PUBLIC_URL}/social-icons/github.png`, alt: "GitHub" },
+              { href: "https://www.youtube.com/@FaroukBenAjimi", src: `${process.env.PUBLIC_URL}/social-icons/youtube.png`, alt: "YouTube" },
+              { href: "https://www.instagram.com/8aymt/", src: `${process.env.PUBLIC_URL}/social-icons/instagram.png`, alt: "Instagram" }
             ].map((icon, i, arr) => (
               <React.Fragment key={icon.alt}>
                 <a
@@ -795,7 +811,6 @@ function Landing() {
                     }}
                   />
                 </a>
-
                 {i < arr.length - 1 && (
                   <div style={{
                     width: "1px",
@@ -810,17 +825,17 @@ function Landing() {
         </header>
       )}
       {showHeader && (
-  <a 
-    href="mailto:your-email@example.com" 
-    className="email-footer"
-    style={{
-      animation: "fadeIn 1s forwards 1s",
-      opacity: 0
-    }}
-  >
-    fbenajimi@gmail.com
-  </a>
-)}
+        <a 
+          href="mailto:your-email@example.com" 
+          className="email-footer"
+          style={{
+            animation: "fadeIn 1s forwards 1s",
+            opacity: 0
+          }}
+        >
+          fbenajimi@gmail.com
+        </a>
+      )}
     </div>
   );
 }
